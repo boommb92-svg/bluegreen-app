@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bluegreen-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://YOUR_GIT_HOST/YOUR_ORG/gitops-bluegreen-repo'
+    path: 'app-chart'
+    targetRevision: HEAD
+    helm:
+      values: |
+        activeColor: "blue"
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: myns
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
