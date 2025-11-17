@@ -1,0 +1,6 @@
+apiVersion: v2
+name: bluegreen-app
+description: Blue/Green Java app + DB + monitoring for Autopilot GKE
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
