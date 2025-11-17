@@ -1,0 +1,30 @@
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: GitRepository
+metadata:
+  name: bluegreen-repo
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://YOUR_GIT_HOST/YOUR_ORG/gitops-bluegreen-repo
+  ref:
+    branch: main
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: bluegreen-app
+  namespace: myns
+spec:
+  releaseName: myapp
+  chart:
+    spec:
+      chart: ./app-chart
+      sourceRef:
+        kind: GitRepository
+        name: bluegreen-repo
+  interval: 1m
+  values:
+    activeColor: "blue"
+    app:
+      imageBlue: "gcr.io/pavan-477919/my-java-app:v1.0.0"
+      imageGreen: "gcr.io/pavan-477919/my-java-app:v1.0.0"
