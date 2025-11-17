@@ -1,0 +1,2 @@
+app:
+  imageGreen: "gcr.io/pavan-477919/my-java-app:BUILD_NUMBER_PLACEHOLDER"
