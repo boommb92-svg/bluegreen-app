@@ -1,0 +1,68 @@
+app:
+  imageBlue: "gcr.io/pavan-477919/my-java-app:v1.0.0"
+  imageGreen: "gcr.io/pavan-477919/my-java-app:v1.0.0"
+  containerPort: 8080
+  replicas: 3
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1000m"
+      memory: "1Gi"
+
+activeColor: "blue"
+
+labels:
+  app: java-app
+
+# Database
+db:
+  enabled: true
+  image: postgres:15
+  replicas: 1
+  storage:
+    size: 10Gi
+    accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+  postgresUser: "postgres"
+  postgresPassword: "changeme"
+  postgresDatabase: "appdb"
+
+prometheus:
+  enabled: true
+  image: prom/prometheus:v2.45.0
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+grafana:
+  enabled: true
+  image: grafana/grafana:10.0.0
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: false
+  hostname: example.mydomain.com
+  annotations: {}
