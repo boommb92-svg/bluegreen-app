@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: 'https://YOUR_GIT_HOST/YOUR_ORG/gitops-bluegreen-repo'
+    repoURL: https://github.com/boommb92-svg/bluegreen-app.git
     path: 'app-chart'
     targetRevision: HEAD
     helm:
