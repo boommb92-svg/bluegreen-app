@@ -1,0 +1,72 @@
+pipeline {
+  agent any
+  environment {
+    REGISTRY = "gcr.io/pavan-477919"
+    IMAGE_NAME = "${REGISTRY}/my-java-app"
+    NAMESPACE = "myns"
+    RELEASE = "myapp"
+
+    GITOPS_REPO = 'git@YOUR_GIT_HOST:YOUR_ORG/gitops-bluegreen-repo.git'
+    GITOPS_BRANCH = 'main'
+
+    KUBECONFIG_CREDENTIALS_ID = 'kubeconfig-credentials'
+    GIT_CREDENTIALS_ID = 'git-ssh-key'
+    GCR_CREDENTIALS_ID = 'gcr-json-key'
+    SONARQUBE_SERVER = 'sonarqube-server' // Jenkins SonarQ credentials id
+    SONARQUBE_TOKEN = 'sonar-token'
+  }
+
+  stages {
+    stage('Checkout') { steps { checkout scm } }
+
+    stage('Build') {
+      steps {
+        script { env.IMAGE_TAG = "${IMAGE_NAME}:${BUILD_NUMBER}" }
+        sh 'docker build -t ${IMAGE_TAG} .'
+      }
+    }
+
+    stage('SonarQube Scan') {
+      steps {
+        withCredentials([string(credentialsId: env.SONARQUBE_TOKEN, variable: 'SONAR_TOKEN')]) {
+          sh '''
+            # run sonar scanner (example with mvn)
+            mvn -B verify sonar:sonar -Dsonar.projectKey=myapp -Dsonar.host.url=http://sonarqube.local -Dsonar.login=${SONAR_TOKEN}
+          '''
+        }
+      }
+    }
+
+    stage('Push Image') {
+      steps {
+        withCredentials([file(credentialsId: env.GCR_CREDENTIALS_ID, variable: 'GCR_KEY')]) {
+          sh '''
+            gcloud auth activate-service-account --key-file=${GCR_KEY} || true
+            gcloud auth configure-docker --quiet || true
+            docker push ${IMAGE_TAG}
+          '''
+        }
+      }
+    }
+
+    stage('Update GitOps (set green image)') {
+      steps {
+        withCredentials([sshUserPrivateKey(credentialsId: env.GIT_CREDENTIALS_ID, keyFileVariable: 'GIT_SSH_KEY')]) {
+          sh '''
+            # clone gitops repo, change values, push
+            git clone ${GITOPS_REPO} --branch ${GITOPS_BRANCH} gitops-repo
+            cd gitops-repo
+            ./jenkins/scripts/update-values.sh ${IMAGE_TAG}
+            git add gitops/apps/bluegreen-values.yaml
+            git commit -m "ci: update green image to ${IMAGE_TAG} [ci skip]" || true
+            git push origin ${GITOPS_BRANCH}
+          '''
+        }
+      }
+    }
+
+    stage('Optional: Trigger ArgoCD sync') {
+      steps {
+        withCredentials([file(credentialsId: env.KUBECONFIG_CREDENTIALS_ID, variable: 'KUBE_CONFIG')]) {
+          sh '''
+ 
