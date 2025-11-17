@@ -65,8 +65,4 @@ pipeline {
       }
     }
 
-    stage('Optional: Trigger ArgoCD sync') {
-      steps {
-        withCredentials([file(credentialsId: env.KUBECONFIG_CREDENTIALS_ID, variable: 'KUBE_CONFIG')]) {
-          sh '''
  
